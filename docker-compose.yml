@@ -5,7 +5,7 @@ services:
     image: postgres:16
     container_name: webhook_pg
     environment:
-      POSTGRES_PASSWORD: pgpass
+      POSTGRES_PASSWORD: admin
     ports:
       - "5432:5432"
     volumes:
