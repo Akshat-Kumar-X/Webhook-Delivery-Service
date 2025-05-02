@@ -16,6 +16,20 @@ services:
     container_name: webhook_redis
     ports:
       - "6379:6379"
-
+      
+  api:
+    build: .
+    container_name: webhook_api
+    environment:
+      # Will matter in Milestone 3, but set now for consistency
+      DATABASE_URL: postgresql+psycopg2://postgres:admin@db:5432/postgres
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./src:/code/src         # hot‑reload on save
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
 volumes:
   pgdata:
