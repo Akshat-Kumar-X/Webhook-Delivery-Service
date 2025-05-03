@@ -11,6 +11,7 @@ engine = create_engine(
     settings.database_url,
     pool_size=10,
     max_overflow=20,
+    # echo=True, 
 )
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
