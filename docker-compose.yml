@@ -45,5 +45,17 @@ services:
       - db
       - redis
 
+  beat:
+    build: .
+    container_name: webhook_beat
+    command: poetry run celery -A app.celery_app.celery beat --loglevel=info
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:admin@db:5432/postgres
+      REDIS_URL: redis://redis:6379/0
+      ATTEMPT_RETENTION_HOURS: 72
+    depends_on:
+      - redis
+      - db
+
 volumes:
   pgdata:

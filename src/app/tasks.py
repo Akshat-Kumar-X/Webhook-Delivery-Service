@@ -1,10 +1,14 @@
-import httpx, time, uuid, json
-from celery import shared_task
+import httpx, time, uuid, json, os
+from datetime import datetime, timedelta
 
+from celery import shared_task
+from celery.schedules import crontab
 from sqlalchemy.orm import Session
+
 from app.db import SessionLocal
 from app import models
-from app.celery_app import celery 
+from app.celery_app import celery
+
 
 @celery.task(
     bind=True,
@@ -48,3 +52,27 @@ def deliver_webhook(self, request_id: str):
         raise self.retry(exc=RuntimeError(f"Non‑2xx status {status_code}"))
 
     return {"attempt_id": attempt.id, "success": success}
+
+
+# Retention config
+RETAIN_HOURS = int(os.getenv("ATTEMPT_RETENTION_HOURS", 72))
+
+@celery.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    # Run every day at 02:30 UTC (≈ 08:00 IST)
+    sender.add_periodic_task(
+        crontab(minute=30, hour=2),
+        purge_old_attempts.s(RETAIN_HOURS)
+    )
+
+
+@shared_task
+def purge_old_attempts(retain_hours: int = 72):
+    """Delete delivery_attempts older than `retain_hours`."""
+    cutoff = datetime.utcnow() - timedelta(hours=retain_hours)
+    db: Session = SessionLocal()
+    deleted = db.query(models.DeliveryAttempt)\
+        .filter(models.DeliveryAttempt.attempted_at < cutoff)\
+        .delete(synchronize_session=False)
+    db.commit()
+    return {"deleted": deleted}
