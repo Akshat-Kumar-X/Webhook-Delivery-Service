@@ -2,6 +2,11 @@
 migrations/env.py
 
 """
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
