@@ -31,5 +31,18 @@ services:
     depends_on:
       - db
       - redis
+      
+  worker:
+    build: .
+    container_name: webhook_worker
+    command: poetry run celery -A app.celery_app.celery worker -Q deliver --loglevel=info --concurrency=4
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:admin@db:5432/postgres
+      REDIS_URL: redis://redis:6379/0
+      REDIS_BACKEND_URL: redis://redis:6379/1
+    depends_on:
+      - db
+      - redis
+
 volumes:
   pgdata:
