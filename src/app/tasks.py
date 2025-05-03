@@ -8,7 +8,7 @@ from app.celery_app import celery
 
 @celery.task(
     bind=True,
-    autoretry_for=(httpx.HTTPError, ),
+    autoretry_for=(Exception,),  # catch all exceptions including RuntimeError
     retry_backoff=True,
     retry_backoff_max=900,
     retry_jitter=True,
@@ -19,7 +19,7 @@ def deliver_webhook(self, request_id: str):
     db: Session = SessionLocal()
     req: models.WebhookRequest = db.get(models.WebhookRequest, uuid.UUID(request_id))
     if not req:
-        self.retry(countdown=5, exc=RuntimeError("Request row missing"))
+        raise self.retry(exc=RuntimeError("Request row missing"))
 
     sub = req.subscription
     start = time.perf_counter()
@@ -45,6 +45,6 @@ def deliver_webhook(self, request_id: str):
     db.commit()
 
     if not success:
-        raise self.retry(exc=RuntimeError("Delivery failed"), countdown=10)
+        raise self.retry(exc=RuntimeError(f"Non‑2xx status {status_code}"))
 
     return {"attempt_id": attempt.id, "success": success}
