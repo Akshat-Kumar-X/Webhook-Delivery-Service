@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.db import SessionLocal
 from app import models
 from app.celery_app import celery
+from app.cache import get_subscription  # ✅ Import the caching function
 
 
 @celery.task(
@@ -25,10 +26,17 @@ def deliver_webhook(self, request_id: str):
     if not req:
         raise self.retry(exc=RuntimeError("Request row missing"))
 
-    sub = req.subscription
+    # ✅ Use cached subscription
+    sub_data = get_subscription(req.subscription_id)
+    if not sub_data:
+        raise self.retry(exc=RuntimeError("Subscription missing"))
+
+    target_url = sub_data["target_url"]
+    secret = sub_data["secret"]
+
     start = time.perf_counter()
     try:
-        r = httpx.post(sub.target_url, json=req.payload, timeout=10.0)
+        r = httpx.post(target_url, json=req.payload, timeout=10.0)
         success = r.status_code < 400
         status_code = r.status_code
         err_msg = None
@@ -49,7 +57,7 @@ def deliver_webhook(self, request_id: str):
     db.commit()
 
     if not success:
-        raise self.retry(exc=RuntimeError(f"Non‑2xx status {status_code}"))
+        raise self.retry(exc=RuntimeError(f"Non-2xx status {status_code}"))
 
     return {"attempt_id": attempt.id, "success": success}
 
