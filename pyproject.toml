@@ -2,6 +2,7 @@
 name = "webhook-service"
 version = "0.1.0"
 description = ""
+packages = [{ include = "app", from = "src" }] 
 authors = [
     {name = "Akshat Kumar",email = "akshatkumar10203@gmail.com"}
 ]
