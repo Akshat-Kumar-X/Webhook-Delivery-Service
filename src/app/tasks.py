@@ -9,7 +9,7 @@ from app.db import SessionLocal
 from app import models
 from app.celery_app import celery
 from app.cache import get_subscription  # ✅ Import the caching function
-
+from app.signing import sign, HEADER_NAME
 
 @celery.task(
     bind=True,
@@ -36,6 +36,10 @@ def deliver_webhook(self, request_id: str):
 
     start = time.perf_counter()
     try:
+        headers = {}
+        if secret := sub_data["secret"]:
+            raw = json.dumps(req.payload, separators=(",", ":")).encode()
+            headers[HEADER_NAME] = sign(secret, raw)
         r = httpx.post(target_url, json=req.payload, timeout=10.0)
         success = r.status_code < 400
         status_code = r.status_code

@@ -1,0 +1,86 @@
+# render.yaml – Blueprint deploy for Webhook Delivery System
+services:
+  # 1️⃣ FastAPI web service, exposed to internet via HTTPS
+  - type: web
+    name: api
+    env: docker
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: DATABASE_URL          # Render will inject actual connection string
+        fromDatabase:
+          name: webhook-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: webhook-redis
+          type: redis
+          property: connectionString
+      - key: SIGNATURE_HEADER      # optional override
+        value: X-Webhook-Signature
+    healthCheckPath: /health
+
+  # 2️⃣ Celery worker – runs in background, no public URL
+  - type: worker
+    name: worker
+    env: docker
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    startCommand: poetry run celery -A app.celery_app.celery worker -Q deliver --loglevel=info --concurrency=2
+    plan: free
+    envVars:
+      - fromDatabase:
+          name: webhook-db
+          property: connectionString
+        key: DATABASE_URL
+      - fromService:
+          name: webhook-redis
+          type: redis
+          property: connectionString
+        key: REDIS_URL
+
+  # 3️⃣ Celery beat – periodic purge_old_attempts
+  - type: worker
+    name: beat
+    env: docker
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    startCommand: poetry run celery -A app.celery_app.celery beat --loglevel=info
+    plan: free
+    envVars:
+      - fromDatabase:
+          name: webhook-db
+          property: connectionString
+        key: DATABASE_URL
+      - fromService:
+          name: webhook-redis
+          type: redis
+          property: connectionString
+        key: REDIS_URL
+
+  # 4️⃣ One‑off migration job – runs on each deploy before web/worker start
+  - type: job
+    name: migrate
+    env: docker
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    startCommand: poetry run alembic upgrade head
+    plan: free
+    runsOnDeploy: true
+    envVars:
+      - fromDatabase:
+          name: webhook-db
+          property: connectionString
+        key: DATABASE_URL
+
+databases:
+  - name: webhook-db
+    plan: free
+    postgresMajorVersion: "16"
+
+redis:
+  - name: webhook-redis
+    plan: free
