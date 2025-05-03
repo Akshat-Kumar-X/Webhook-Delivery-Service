@@ -4,8 +4,9 @@ from celery import shared_task
 from sqlalchemy.orm import Session
 from app.db import SessionLocal
 from app import models
+from app.celery_app import celery 
 
-@shared_task(
+@celery.task(
     bind=True,
     autoretry_for=(httpx.HTTPError, ),
     retry_backoff=True,
