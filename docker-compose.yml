@@ -24,6 +24,7 @@ services:
       # Will matter in Milestone 3, but set now for consistency
       DATABASE_URL: postgresql+psycopg2://postgres:admin@db:5432/postgres
       REDIS_URL: redis://redis:6379/0
+      REDIS_BACKEND_URL: redis://redis:6379/1
     volumes:
       - ./src:/code/src         # hot‑reload on save
     ports:
@@ -31,7 +32,7 @@ services:
     depends_on:
       - db
       - redis
-      
+
   worker:
     build: .
     container_name: webhook_worker
