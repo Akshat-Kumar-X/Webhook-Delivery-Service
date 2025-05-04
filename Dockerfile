@@ -1,5 +1,6 @@
 # Dockerfile  (root of repo)
 FROM python:3.12-slim
+ARG BUILD_ID=0
 
 # 1. System basics
 ENV PYTHONDONTWRITEBYTECODE=1 PIP_NO_CACHE_DIR=1
@@ -24,4 +25,4 @@ RUN chmod +x start_all.sh
 
 # 6. Entrypoint: run script (no --reload in prod)
 CMD ["./start_all.sh"]
-# rebuild
+
