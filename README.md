@@ -115,6 +115,23 @@ GET /status/subscription/{sub_id}?limit=50
 | **In‑process LRU cache**    | `app/cache.py`                            | \~4× faster hot‑path `GET`         |
 | **Scheduled cleanup**       | `tasks.purge_old_attempts` (Celery beat)  | DB stays lean automatically        |
 
+## 📦 Module Responsibilities
+
+| **Module/File**       | **Responsibility**                                                                 |
+|------------------------|------------------------------------------------------------------------------------|
+| `main.py`              | Entry point for FastAPI app, includes all route registrations and CORS setup.     |
+| `db.py`                | Sets up SQLAlchemy session factory and database engine using `DATABASE_URL`.      |
+| `models.py`            | Defines ORM models: `Subscription`, `WebhookRequest`, and `DeliveryAttempt`.      |
+| `schemas.py`           | Pydantic models for request/response validation (`SubscriptionCreate`, etc.).     |
+| `config.py`            | Central place for environment config (e.g. retention hours, CORS origins, etc.).  |
+| `cache.py`             | In-process `@lru_cache` layer to speed up subscription lookups.                   |
+| `celery_app.py`        | Initializes Celery instance with Redis broker and task config.                    |
+| `tasks.py`             | Core Celery tasks: `deliver_webhook`, `purge_old_attempts`, retry logic, backoff. |
+| `signing.py`           | HMAC SHA-256 based signature generation and verification for secure ingest.       |
+| `subscriptions.py`     | `/subscriptions` API: create and fetch subscription metadata.                     |
+| `ingest.py`            | `/ingest` API: verify, parse, log incoming events, enqueue Celery delivery.       |
+| `status.py`            | `/status` API: query delivery logs by subscription or request ID.                 |
+
 ---
 
 ## Local Development
