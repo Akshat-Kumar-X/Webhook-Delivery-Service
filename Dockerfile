@@ -17,8 +17,10 @@ RUN poetry install --no-root --only main,dev
 COPY alembic.ini .
 COPY migrations ./migrations
 
-# 5. Copy source code
+# 5. Copy application code
 COPY src /code/src
+COPY start_all.sh .
+RUN chmod +x start_all.sh
 
-# 6. Start FastAPI with hot‑reload
-CMD ["poetry", "run", "uvicorn", "src.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# 6. Entrypoint: run script (no --reload in prod)
+CMD ["./start_all.sh"]
