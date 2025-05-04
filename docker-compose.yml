@@ -21,12 +21,12 @@ services:
     build: .
     container_name: webhook_api
     environment:
-      # Will matter in Milestone 3, but set now for consistency
       DATABASE_URL: postgresql+psycopg2://postgres:admin@db:5432/postgres
       REDIS_URL: redis://redis:6379/0
       REDIS_BACKEND_URL: redis://redis:6379/1
     volumes:
-      - ./src:/code/src         # hot‑reload on save
+      - ./src:/code/src                   # hot‑reload on save
+      - ./migrations:/code/migrations     # mount for Alembic revisions
     ports:
       - "8000:8000"
     depends_on:

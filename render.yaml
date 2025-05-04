@@ -1,4 +1,5 @@
 services:
+  # 🔹 FastAPI main app
   - type: web
     name: api
     env: docker
@@ -8,7 +9,7 @@ services:
     healthCheckPath: /health
     envVars:
       - key: PORT
-        value: "8000"                       # Render passes $PORT to the script
+        value: "8000"
       - key: DATABASE_URL
         fromDatabase:
           name: webhook-db
@@ -19,11 +20,26 @@ services:
           type: redis
           property: connectionString
 
+  # 🔹 Alembic migrations worker — runs on every deploy and exits
+  - type: worker
+    name: migrate
+    env: docker
+    plan: free
+    dockerContext: .
+    dockerfilePath: ./Dockerfile.migrate
+    runCommand: ""            # REQUIRED — tells Render to use CMD
+    autoDeploy: true          # Runs on every push
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: webhook-db
+          property: connectionString
+
+  # 🔹 Redis backend
   - type: redis
     name: webhook-redis
     plan: free
-    ipAllowList:
-      - source: 0.0.0.0/0
+    ipAllowList: []           # secure default
 
 databases:
   - name: webhook-db
