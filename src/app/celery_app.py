@@ -2,8 +2,8 @@ from celery import Celery
 import os
 
 # ✅ Use environment variables only, without Docker-style fallbacks
-REDIS_URL = os.getenv("REDIS_URL")  # Provided by Render
-BACKEND_URL = os.getenv("REDIS_BACKEND_URL", REDIS_URL)  # Optional override
+REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
+BACKEND_URL = os.getenv("REDIS_BACKEND_URL", "redis://redis:6379/1")
 
 # 🔧 Instantiate Celery with proper settings
 celery = Celery(

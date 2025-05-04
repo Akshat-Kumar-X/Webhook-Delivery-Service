@@ -1,46 +1,60 @@
+# render.yaml  –  free‑tier blueprint
 services:
-  # 🔹 FastAPI main app
+  # 🌐 FastAPI + Celery (worker & beat) combined
   - type: web
     name: api
     env: docker
     plan: free
     dockerContext: .
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile          # this image runs start_all.sh
     healthCheckPath: /health
     envVars:
       - key: PORT
         value: "8000"
+
+      # --- database ----------------------------------------------------------
       - key: DATABASE_URL
         fromDatabase:
           name: webhook-db
           property: connectionString
-      - key: REDIS_URL
+
+      # --- redis broker / backend -------------------------------------------
+      - key: REDIS_URL              # Celery broker  (db 0)
         fromService:
           name: webhook-redis
           type: redis
           property: connectionString
 
-  # 🔹 Alembic migrations worker — runs on every deploy and exits
+      - key: REDIS_BACKEND_URL      # Celery result backend (db 1)
+        fromService:
+          name: webhook-redis
+          type: redis
+          property: connectionString
+
+  # ⚙️  Alembic migrations — runs on every deploy and exits cleanly
   - type: worker
     name: migrate
     env: docker
     plan: free
     dockerContext: .
-    dockerfilePath: ./Dockerfile.migrate
-    # runCommand: ""            # REQUIRED — tells Render to use CMD
-    # autoDeploy: true          # Runs on every push
+    dockerfilePath: ./Dockerfile.migrate  # image whose CMD is `alembic upgrade head`
+    runCommand: ""        # tell Render to use image CMD
+    autoDeploy: true
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: webhook-db
-          property: connectionString
+        fromDatabase: { name: webhook-db, property: connectionString }
+      - key: REDIS_URL
+        fromService:  { name: webhook-redis, type: redis, property: connectionString }
+      - key: REDIS_BACKEND_URL
+        fromService:  { name: webhook-redis, type: redis, property: connectionString }
 
-  # 🔹 Redis backend
+# 🔴 Redis add‑on --------------------------------------------------------------
   - type: redis
     name: webhook-redis
     plan: free
-    ipAllowList: []           # secure default
+    ipAllowList: []        # default: only Render internal traffic
 
+# 🟦 PostgreSQL add‑on ---------------------------------------------------------
 databases:
   - name: webhook-db
     plan: free
