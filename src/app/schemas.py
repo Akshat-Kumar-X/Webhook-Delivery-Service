@@ -1,14 +1,16 @@
 import uuid
 from datetime import datetime
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, Field
 from typing import Optional
 
 class SubscriptionCreate(BaseModel):
-    target_url: HttpUrl
+    target_url: str
     secret: str | None = None
     event_types: list[str] | None = Field(
-        default=None,
-        description="List of event names this subscription wants (null = all)"
+        None,
+        description="If given, deliver only these event types "
+        "(e.g. ['invoice.paid', 'user.updated']).",
+        min_items=1,
     )
 
 class PayloadIn(BaseModel):
