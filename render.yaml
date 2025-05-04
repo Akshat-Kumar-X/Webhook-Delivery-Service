@@ -27,8 +27,8 @@ services:
     plan: free
     dockerContext: .
     dockerfilePath: ./Dockerfile.migrate
-    runCommand: ""            # REQUIRED — tells Render to use CMD
-    autoDeploy: true          # Runs on every push
+    # runCommand: ""            # REQUIRED — tells Render to use CMD
+    # autoDeploy: true          # Runs on every push
     envVars:
       - key: DATABASE_URL
         fromDatabase:
