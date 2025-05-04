@@ -6,8 +6,15 @@ from typing import Optional
 class SubscriptionCreate(BaseModel):
     target_url: HttpUrl
     secret: str | None = None
-    event_types: list[str] | None = None
+    event_types: list[str] | None = Field(
+        default=None,
+        description="List of event names this subscription wants (null = all)"
+    )
 
+class PayloadIn(BaseModel):
+    subscription_id: uuid.UUID
+    event_type: str
+    body: dict
 
 class SubscriptionRead(BaseModel):
     id: uuid.UUID
