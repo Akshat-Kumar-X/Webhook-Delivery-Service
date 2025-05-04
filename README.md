@@ -53,7 +53,7 @@ This service ingests JSON events, queues them for delivery, retries intelligentl
 ### 1️⃣ Create a Subscription
 
 ```bash
-curl -X POST https://your‑host/subscriptions \
+curl -X POST https://api-38wr.onrender.com/subscriptions \
      -H "Content-Type: application/json" \
      -d '{
            "target_url": "https://webhook.site/<uuid>",
@@ -85,7 +85,7 @@ SECRET='s3cr3t'
 BODY='{"subscription_id":"36b5eeec-3d5d-481c-884f-a5eda8bbe05c","event_type":"invoice.paid","body":{"id":123}}'
 SIG=$(sign "$SECRET" "$BODY")
 
-curl -X POST https://your‑host/ingest \
+curl -X POST https://api-38wr.onrender.com/ingest \
      -H "Content-Type: application/json" \
      -H "X-Webhook-Signature: $SIG" \
      -d "$BODY"
@@ -129,8 +129,6 @@ docker compose up --build -d
 # run migrations once
 docker compose exec api poetry run alembic upgrade head
 
-# run tests
-poetry run pytest -q
 ```
 
 ---
