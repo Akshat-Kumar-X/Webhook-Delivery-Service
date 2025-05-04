@@ -24,3 +24,4 @@ RUN chmod +x start_all.sh
 
 # 6. Entrypoint: run script (no --reload in prod)
 CMD ["./start_all.sh"]
+# rebuild
