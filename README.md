@@ -82,7 +82,7 @@ PY
 }
 
 SECRET='s3cr3t'
-BODY='{"subscription_id":"36b5eeec-3d5d-481c-884f-a5eda8bbe05c","event_type":"invoice.paid","body":{"id":123}}'
+BODY='{"subscription_id":"25822c48-5465-440f-ae29-53d25581970b","event_type":"invoice.paid","body":{"id":123}}'
 SIG=$(sign "$SECRET" "$BODY")
 
 curl -X POST https://api-38wr.onrender.com/ingest \
